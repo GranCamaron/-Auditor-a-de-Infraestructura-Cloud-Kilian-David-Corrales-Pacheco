@@ -1,94 +1,228 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?xml-model href="CatalogoCloud.xsd" type="application/xml" schematypens="http://www.w3.org/2001/XMLSchema"?>
-<!-- 
-  ========================================================
-  Módulo: LMSGI - CFGS DAM/DAW
-  Autor: Willman Acosta Lugo
-  Reto Práctico: Extracción Precisa con XPath
-  Archivo: catalogo.xml (Context Item para XPath Notebook)
-  ========================================================
--->
-<catalogo_cloud empresa="TechNova Cloud">
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
 
-    <!-- Data Center: Región Sur (Madrid) -->
-    <centro_datos ubicacion="Madrid" zona="eu-sur-1">
+    <xs:simpleType name="TipoIdServidor">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="srv-[a-z]+-[0-9]{2}" />
+        </xs:restriction>
+    </xs:simpleType>
 
-        <servidor id="srv-web-01" rack="A1" estado="activo">
-            <hardware>
-                <cpu nucleos="16" arquitectura="x86_64">Intel Xeon Gold</cpu>
-                <ram unidad="GB">64</ram>
-                <discos>
-                    <disco tipo="NVMe" capacidad_tb="2" principal="true" />
-                    <disco tipo="SSD" capacidad_tb="4" principal="false" />
-                </discos>
-            </hardware>
-            <software>
-                <so version="22.04">Ubuntu Server</so>
-                <servicios>
-                    <servicio puerto="80">Nginx HTTP</servicio>
-                    <servicio puerto="443">Nginx HTTPS</servicio>
-                </servicios>
-            </software>
-        </servidor>
+    <xs:simpleType name="TipoZona">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[a-z]{2}-[a-z]+-\d+" />
+        </xs:restriction>
+    </xs:simpleType>
 
-        <servidor id="srv-db-01" rack="A2" estado="mantenimiento">
-            <hardware>
-                <cpu nucleos="64" arquitectura="ARM">Ampere Altra</cpu>
-                <ram unidad="GB">256</ram>
-                <discos>
-                    <disco tipo="NVMe" capacidad_tb="8" principal="true" />
-                </discos>
-            </hardware>
-            <software>
-                <so version="15">Debian GNU/Linux</so>
-                <servicios>
-                    <servicio puerto="5432">PostgreSQL</servicio>
-                </servicios>
-            </software>
-        </servidor>
+    <xs:simpleType name="TipoRack">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Z]\d{1,2}" />
+        </xs:restriction>
+    </xs:simpleType>
 
-    </centro_datos>
+    <xs:simpleType name="TipoVersion">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="\d+(\.\d+)*" />
+        </xs:restriction>
+    </xs:simpleType>
 
-    <!-- Data Center: Región Central (París) -->
-    <centro_datos ubicacion="Paris" zona="eu-centro-1">
+    <xs:simpleType name="TipoEstado">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="activo|mantenimiento|apagado" />
+        </xs:restriction>
+    </xs:simpleType>
 
-        <servidor id="srv-ia-01" rack="B1" estado="activo">
-            <hardware>
-                <cpu nucleos="32" arquitectura="x86_64">AMD EPYC</cpu>
-                <ram unidad="GB">128</ram>
-                <!-- Ojo aquí: Este es el único servidor con GPU, ideal para filtrar por existencia
-                de nodo -->
-                <gpu modelo="NVIDIA A100" vram_gb="80">Tensor Core</gpu>
-                <discos>
-                    <disco tipo="NVMe" capacidad_tb="4" principal="true" />
-                </discos>
-            </hardware>
-            <software>
-                <so version="22.04">Ubuntu Server</so>
-                <servicios>
-                    <servicio puerto="8888">Jupyter Hub</servicio>
-                </servicios>
-            </software>
-        </servidor>
+    <!-- ===================== -->
+    <!-- MISION 1 -->
+    <!-- ===================== -->
 
-        <servidor id="srv-backup-01" rack="B2" estado="apagado">
-            <hardware>
-                <cpu nucleos="8" arquitectura="x86_64">Intel Xeon Bronze</cpu>
-                <ram unidad="GB">32</ram>
-                <discos>
-                    <!-- Almacenamiento masivo pero mecánico (HDD) -->
-                    <disco tipo="HDD" capacidad_tb="50" principal="true" />
-                </discos>
-            </hardware>
-            <software>
-                <so version="9">CentOS Stream</so>
-                <servicios>
-                    <servicio puerto="22">OpenSSH</servicio>
-                    <servicio puerto="873">Rsync</servicio>
-                </servicios>
-            </software>
-        </servidor>
+    <xs:attributeGroup name="AtributosServidor">
+        <xs:attribute name="id" type="TipoIdServidor" use="required"/>
+        <xs:attribute name="rack" type="TipoRack" use="required"/>
+        <xs:attribute name="estado" type="TipoEstado" use="required"/>
+    </xs:attributeGroup>
 
-    </centro_datos>
+    <!-- ===================== -->
+    <!-- MISION 2 + 3 -->
+    <!-- ===================== -->
 
-</catalogo_cloud>
+    <xs:group name="ComponentesHardware">
+        <xs:sequence>
+
+            <xs:element name="cpu">
+                <xs:complexType>
+                    <xs:simpleContent>
+                        <xs:extension base="xs:string">
+                            <xs:attribute name="nucleos" type="xs:integer" use="required"/>
+                            <xs:attribute name="arquitectura" type="xs:string" use="required"/>
+                        </xs:extension>
+                    </xs:simpleContent>
+                </xs:complexType>
+            </xs:element>
+
+            <xs:element name="ram">
+                <xs:complexType>
+                    <xs:simpleContent>
+                        <xs:extension base="xs:integer">
+                            <xs:attribute name="unidad" use="required">
+                                <xs:simpleType>
+                                    <xs:restriction base="xs:string">
+                                        <xs:pattern value="MB|GB|TB"/>
+                                    </xs:restriction>
+                                </xs:simpleType>
+                            </xs:attribute>
+                        </xs:extension>
+                    </xs:simpleContent>
+                </xs:complexType>
+            </xs:element>
+
+            <!-- GPU opcional -->
+            <xs:element name="gpu" minOccurs="0">
+                <xs:complexType>
+                    <xs:simpleContent>
+                        <xs:extension base="xs:string">
+                            <xs:attribute name="modelo" type="xs:string" use="required"/>
+                            <xs:attribute name="vram_gb" type="xs:integer" use="required"/>
+                        </xs:extension>
+                    </xs:simpleContent>
+                </xs:complexType>
+            </xs:element>
+
+            <!-- max 8 discos -->
+            <xs:element name="discos">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="disco" maxOccurs="8">
+                            <xs:complexType>
+                                <xs:attribute name="tipo" use="required">
+                                    <xs:simpleType>
+                                        <xs:restriction base="xs:string">
+                                            <xs:pattern value="NVMe|SSD|HDD"/>
+                                        </xs:restriction>
+                                    </xs:simpleType>
+                                </xs:attribute>
+                                <xs:attribute name="capacidad_tb" type="xs:integer" use="required"/>
+                                <xs:attribute name="principal" type="xs:boolean" use="required"/>
+                            </xs:complexType>
+                        </xs:element>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+
+        </xs:sequence>
+    </xs:group>
+
+    <!-- ===================== -->
+    <!-- ESTRUCTURA -->
+    <!-- ===================== -->
+
+    <xs:element name="catalogo_cloud">
+
+        <xs:complexType>
+            <xs:sequence>
+
+                <xs:element name="centro_datos" maxOccurs="unbounded">
+                    <xs:complexType>
+                        <xs:sequence>
+
+                            <xs:element name="servidor" maxOccurs="unbounded">
+                                <xs:complexType>
+                                    <xs:sequence>
+
+                                        <!-- hardware con group -->
+                                        <xs:element name="hardware">
+                                            <xs:complexType>
+                                                <xs:group ref="ComponentesHardware"/>
+                                            </xs:complexType>
+                                        </xs:element>
+
+                                        <!-- software -->
+                                        <xs:element name="software">
+                                            <xs:complexType>
+                                                <xs:sequence>
+
+                                                    <xs:element name="so">
+                                                        <xs:complexType>
+                                                            <xs:simpleContent>
+                                                                <xs:extension base="xs:string">
+                                                                    <xs:attribute name="version" type="TipoVersion" use="required"/>
+                                                                </xs:extension>
+                                                            </xs:simpleContent>
+                                                        </xs:complexType>
+                                                    </xs:element>
+
+                                                    <xs:element name="servicios">
+                                                        <xs:complexType>
+                                                            <xs:sequence>
+                                                                <xs:element name="servicio" maxOccurs="unbounded">
+                                                                    <xs:complexType>
+                                                                        <xs:simpleContent>
+                                                                            <xs:extension base="xs:string">
+                                                                                <xs:attribute name="puerto" type="xs:integer" use="required"/>
+                                                                            </xs:extension>
+                                                                        </xs:simpleContent>
+                                                                    </xs:complexType>
+                                                                </xs:element>
+                                                            </xs:sequence>
+                                                        </xs:complexType>
+                                                    </xs:element>
+
+                                                </xs:sequence>
+                                            </xs:complexType>
+                                        </xs:element>
+
+                                        <!-- MISION 4 -->
+                                        <xs:element name="red">
+                                            <xs:complexType>
+                                                <xs:choice>
+                                                    <xs:element name="ip_fija" type="xs:string"/>
+                                                    <xs:element name="dhcp">
+                                                        <xs:simpleType>
+                                                            <xs:restriction base="xs:string">
+                                                                <xs:pattern value="si|no"/>
+                                                            </xs:restriction>
+                                                        </xs:simpleType>
+                                                    </xs:element>
+                                                </xs:choice>
+                                            </xs:complexType>
+                                        </xs:element>
+
+                                        <!-- MISION 5 -->
+                                        <xs:element name="auditoria">
+                                            <xs:complexType>
+                                                <xs:all>
+                                                    <xs:element name="fecha_revision" type="xs:date"/>
+                                                    <xs:element name="tecnico" type="xs:string"/>
+                                                    <xs:element name="nota" type="xs:string"/>
+                                                </xs:all>
+                                            </xs:complexType>
+                                        </xs:element>
+
+                                    </xs:sequence>
+
+                                    <xs:attributeGroup ref="AtributosServidor"/>
+
+                                </xs:complexType>
+                            </xs:element>
+
+                        </xs:sequence>
+
+                        <xs:attribute name="ubicacion" type="xs:string" use="required"/>
+                        <xs:attribute name="zona" type="TipoZona" use="required"/>
+
+                    </xs:complexType>
+                </xs:element>
+
+            </xs:sequence>
+
+            <xs:attribute name="empresa" type="xs:string" use="required"/>
+        </xs:complexType>
+
+        <!-- MISION 6 -->
+        <xs:unique name="UnicoID">
+            <xs:selector xpath="centro_datos/servidor"/>
+            <xs:field xpath="@id"/>
+        </xs:unique>
+
+    </xs:element>
+
+</xs:schema>
