@@ -31,21 +31,13 @@
         </xs:restriction>
     </xs:simpleType>
 
-    <!-- ===================== -->
-    <!-- MISION 1 -->
-    <!-- ===================== -->
-
     <xs:attributeGroup name="AtributosServidor">
         <xs:attribute name="id" type="TipoIdServidor" use="required"/>
         <xs:attribute name="rack" type="TipoRack" use="required"/>
         <xs:attribute name="estado" type="TipoEstado" use="required"/>
     </xs:attributeGroup>
 
-    <!-- ===================== -->
-    <!-- MISION 2 + 3 -->
-    <!-- ===================== -->
-
-    <xs:group name="ComponentesHardware">
+    <xs:group name="Componentes">
         <xs:sequence>
 
             <xs:element name="cpu">
@@ -75,7 +67,6 @@
                 </xs:complexType>
             </xs:element>
 
-            <!-- GPU opcional -->
             <xs:element name="gpu" minOccurs="0">
                 <xs:complexType>
                     <xs:simpleContent>
@@ -87,7 +78,6 @@
                 </xs:complexType>
             </xs:element>
 
-            <!-- max 8 discos -->
             <xs:element name="discos">
                 <xs:complexType>
                     <xs:sequence>
@@ -111,9 +101,7 @@
         </xs:sequence>
     </xs:group>
 
-    <!-- ===================== -->
-    <!-- ESTRUCTURA -->
-    <!-- ===================== -->
+ 
 
     <xs:element name="catalogo_cloud">
 
@@ -127,15 +115,11 @@
                             <xs:element name="servidor" maxOccurs="unbounded">
                                 <xs:complexType>
                                     <xs:sequence>
-
-                                        <!-- hardware con group -->
                                         <xs:element name="hardware">
                                             <xs:complexType>
-                                                <xs:group ref="ComponentesHardware"/>
+                                                <xs:group ref="Componentes"/>
                                             </xs:complexType>
                                         </xs:element>
-
-                                        <!-- software -->
                                         <xs:element name="software">
                                             <xs:complexType>
                                                 <xs:sequence>
@@ -174,7 +158,7 @@
                                         <xs:element name="red">
                                             <xs:complexType>
                                                 <xs:choice>
-                                                    <xs:element name="ip_fija" type="xs:string"/>
+                                                    <xs:element name="ip" type="xs:string"/>
                                                     <xs:element name="dhcp">
                                                         <xs:simpleType>
                                                             <xs:restriction base="xs:string">
@@ -185,8 +169,6 @@
                                                 </xs:choice>
                                             </xs:complexType>
                                         </xs:element>
-
-                                        <!-- MISION 5 -->
                                         <xs:element name="auditoria">
                                             <xs:complexType>
                                                 <xs:all>
@@ -216,8 +198,6 @@
 
             <xs:attribute name="empresa" type="xs:string" use="required"/>
         </xs:complexType>
-
-        <!-- MISION 6 -->
         <xs:unique name="UnicoID">
             <xs:selector xpath="centro_datos/servidor"/>
             <xs:field xpath="@id"/>
